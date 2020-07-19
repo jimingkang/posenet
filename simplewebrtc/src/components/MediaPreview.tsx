@@ -1,4 +1,5 @@
 import { Media, Video } from '@andyet/simplewebrtc';
+import WebcamStream from "WebcamStream"；
 import React from 'react';
 import styled from 'styled-components';
 import mq from '../styles/media-queries';
@@ -48,7 +49,9 @@ interface MediaPreviewProps {
 const MediaPreview: React.SFC<MediaPreviewProps> = ({ video }) => (
   <Container>
     {/* TODO: Display something that communicates media.noInput media.hasEverHadInput */}
-    {video && video.loaded ? <Video media={video} /> : <NoVideo />}
+   /* {video && video.loaded ? <Video media={video} /> : <NoVideo />}*/
+	
+	{video && video.loaded ? <WebcamStream/> : <NoVideo />}
   </Container>
 );
 
