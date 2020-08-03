@@ -5,6 +5,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var socketIo = require('socket.io');
+ const { createProxyMiddleware } = require('http-proxy-middleware');
 //var camera=require("camera");
 
 var express = require('express');
@@ -35,8 +36,25 @@ log4js.configure({
 var logger = log4js.getLogger();
 
 var app = express();
-app.use(serveIndex('./public'));
-app.use(express.static('./public'));
+var options = {
+  target: 'http://localhost:3001', //转发到的地址
+  changeOrigin: true, // needed for virtual hosted sites
+  //ws: true, // 代理websocket
+   secure: false,
+    logLevel: 'debug',
+  pathRewrite: {
+   // '^/api': '', // rewrite path
+  },
+  router: {
+    // 当请求localhost:3000/api时，会转发到http://localhost:8080,
+    'localhost:80': 'http://localhost:3001'
+  }
+}
+var exampleProxy = createProxyMiddleware(options);
+app.use(['/banner','/playlist/hot','/personalized','/artist/list','/playlist/detail'], exampleProxy);
+
+app.use(serveIndex('./public/dist'));
+app.use(express.static('./public/dist'));
 
 
 
@@ -44,8 +62,14 @@ app.use(express.static('./public'));
 //var http_server = http.createServer(app);
 //http_server.listen(80, '0.0.0.0');
 
-var webServer = http.createServer(app);
+//var webServer = http.createServer(app);
+//var webServer = https.createServer(app);
 // Start Socket.io so it attaches itself to Express server
+var webServer = https.createServer({
+    key:  fs.readFileSync(__dirname + "/certs/localhost.key"),
+    cert: fs.readFileSync(__dirname + "/certs/localhost.crt")
+}, app);
+
 var socketServer = socketIo.listen(webServer, {"log level":1});
 
 easyrtc.setOption("logLevel", "debug");
@@ -84,8 +108,11 @@ var rtc = easyrtc.listen(app, socketServer, null, function(err, rtcRef) {
 });
 
 // Listen on port 8080
-webServer.listen(8080, function () {
-    console.log('listening on http://localhost:8080');
+//webServer.listen(80, function () {
+ //   console.log('listening on http://localhost:80');
+//});
+webServer.listen(443, function () {
+    console.log('listening on https://localhost:443');
 });
 
 
